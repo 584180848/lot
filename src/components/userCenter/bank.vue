@@ -1,11 +1,13 @@
 <template>
     <div class="bank">
+        <Secpass v-if="secpassShow" />
         <div v-if="show" style="background:#eee;padding: 20px">
             <Card v-for="(item,value) of bankinfo" :key="value" :bordered="false">
                 <p slot="title">
                     <Icon type="ios-card"></Icon>我的银行卡
                 </p>
                 <Button
+                    shape="circle"
                     v-if="item.islock==1"
                     type="error"
                     href="#"
@@ -90,7 +92,7 @@
                 </Input>
             </FormItem>
             <FormItem>
-                <Button type="primary" long @click="handleSubmit('formInline')">设置银行卡</Button>
+                <Button shape="circle" type="error" long @click="handleSubmit('formInline')">设置银行卡</Button>
             </FormItem>
         </Form>
     </div>
@@ -115,10 +117,12 @@ import {
     Option,
     Card
 } from 'iview'
+import Secpass from './secpass.vue'
 export default {
     name: 'bank',
     data() {
         return {
+            secpassShow: true, //资金密码
             show: false, //是否显示添加银行卡
             branchList: [], //获取银行列表
             provinceList: [], //省市列表
@@ -195,11 +199,14 @@ export default {
                 updateuserbankcard(this.formInline).then(res => {
                     this.bankinfo = res.data.banklist
                     this.show = true
+                    this.$parent.$parent.alert = false
                 })
             } else {
                 adduserbank(this.formInline).then(res => {
                     this.bankinfo = res.data.banklist
                     this.show = true
+                    this.$parent.$parent.alert = false
+                    this.$Message.success('银行卡绑定成功')
                 })
             }
         },
@@ -235,12 +242,15 @@ export default {
         Button,
         Select,
         Option,
-        Card
+        Card,
+        Secpass
     }
 }
 </script>
 
 <style lang="stylus" scoped>
+.bank
+    padding 20px
 .contentText
     padding 10px
 </style>

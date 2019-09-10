@@ -21,14 +21,16 @@ export default new Router({
                 import(/* webpackChunkName: "lottery" */ './views/lottery.vue')
         },
         {
-            path: '/test',
-            name: 'test',
+            path: '/electronics',
+            name: 'electronics',
             component: () =>
-                import(/* webpackChunkName: "test" */ './views/test.vue')
+                import(/* webpackChunkName: "electronics" */ './views/electronics.vue')
         },
+
         {
             path: '/activityList',
             name: 'activityList',
+            props: true,
             component: () =>
                 import(/* webpackChunkName: "activityList" */ './views/activityList.vue')
         },
@@ -37,6 +39,69 @@ export default new Router({
             name: 'registered',
             component: () =>
                 import(/* webpackChunkName: "registered" */ './views/registered.vue')
+        },
+        {
+            path: '/speedTest',
+            name: 'speedTest',
+            component: () =>
+                import(/* webpackChunkName: "speedTest" */ './views/speedTest.vue')
+        },
+        {
+            path: '/history',
+            name: 'history',
+            component: () =>
+                import(/* webpackChunkName: "history" */ './views/history.vue')
+        },
+        {
+            path: '/userCenter',
+            name: 'userCenter',
+            component: () =>
+                import(/* webpackChunkName: "userCenter" */ './views/userCenter.vue'),
+            children: [
+                {
+                    path: 'agentManagement',
+                    name: 'agentManagement',
+                    component: () =>
+                        import(/* webpackChunkName: "agentManagement" */ '@/components/userCenter/agentManagement.vue')
+                },
+                {
+                    path: 'bettingRecord',
+                    name: 'bettingRecord',
+                    component: () =>
+                        import(/* webpackChunkName: "bettingRecord" */ '@/components/userCenter/bettingRecord.vue')
+                },
+                {
+                    path: 'personalManagement',
+                    name: 'personalManagement',
+                    props: true,
+                    component: () =>
+                        import(/* webpackChunkName: "personalManagement" */ '@/components/userCenter/personalManagement.vue')
+                },
+                {
+                    path: 'daySalary',
+                    name: 'daySalary',
+                    component: () =>
+                        import(/* webpackChunkName: "daySalary" */ '@/components/userCenter/daySalary.vue')
+                },
+                {
+                    path: 'lotteryShare',
+                    name: 'lotteryShare',
+                    component: () =>
+                        import(/* webpackChunkName: "lotteryShare" */ '@/components/userCenter/lotteryShare.vue')
+                },
+                {
+                    path: 'transaction',
+                    name: 'transaction',
+                    component: () =>
+                        import(/* webpackChunkName: "lotteryShare" */ '@/components/userCenter/transaction.vue')
+                },
+                {
+                    path: 'teamProfitLossStatement',
+                    name: 'teamProfitLossStatement',
+                    component: () =>
+                        import(/* webpackChunkName: "lotteryShare" */ '@/components/userCenter/teamProfitLossStatement.vue')
+                }
+            ]
         }
     ]
 })

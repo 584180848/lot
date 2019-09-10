@@ -1,115 +1,100 @@
 <template>
     <div>
-        <Form :model="bettingRecord" :label-width="72" inline>
-            <FormItem label="彩种名称">
+        <div class="navTitle">投注记录</div>
+        <Form
+            :model="bettingRecord"
+            :label-width="80"
+            inline
+            @keydown.native.enter.prevent="()=>{}"
+        >
+            <FormItem label="游戏类型">
                 <Select
-                    @on-change="getUserLotterymethod"
-                    v-model="bettingRecord.lotteryid"
-                    style="width:110px"
+                    placeholder="请先选择游戏类型"
+                    v-model="bettingRecord.main_type"
+                    style="width:140px"
+                    @on-change="getSubType"
                 >
-                    <Option v-for="(item,value) of lotteryList" :key="value" :value="value">{{item}}</Option>
+                    <Option
+                        v-for="(item,index) of typeList"
+                        :key="index"
+                        :value="item.main_type"
+                    >{{item.name}}</Option>
                 </Select>
             </FormItem>
-            <FormItem label="游戏玩法">
-                <Select placeholder="请先选择彩种" v-model="bettingRecord.methodid" style="width:120px">
-                    <Option value="0">所有玩法</Option>
+            <FormItem label="游戏大厅">
+                <Select placeholder="请先选择游戏类型" v-model="bettingRecord.sub_type" style="width:140px">
                     <Option
-                        v-for="item of lotteryMethodList"
-                        :key="item.methodid"
-                        :value="item.methodid"
-                    >{{item.methodname}}</Option>
-                </Select>
-            </FormItem>
-            <FormItem label="奖金组类型">
-                <Select v-model="bettingRecord.userpointtype" style="width:100px">
-                    <Option
-                        v-for="item of userPointTypeList"
-                        :key="item.value"
-                        :value="item.value"
+                        v-for="(item,index) of subList"
+                        :key="index"
+                        :value="item.sub_type"
                     >{{item.name}}</Option>
                 </Select>
             </FormItem>
             <FormItem label="请选择日期">
                 <DatePicker
-                    v-model="bettingRecord.starttime"
+                    v-model="bettingRecord.sDate"
                     format="yyyy-MM-dd HH:mm:ss"
                     type="datetimerange"
                     placeholder="请选择日期"
-                    style="width: 280px"
+                    style="width: 190px"
+                    placement="bottom-end"
+                    :options="maxDay"
                 ></DatePicker>
             </FormItem>
-            <FormItem label="下级用户名">
-                <Select placeholder="查询下级信息" v-model="bettingRecord.username" style="width:120px">
-                    <Option
-                        v-for="(item,value) of userList"
-                        :key="value"
-                        :value="item.username"
-                    >{{item.username}}</Option>
-                </Select>
-            </FormItem>
-            <FormItem label="彩种奖期">
-                <Input v-model="bettingRecord.issue" placeholder="请选择"></Input>
-            </FormItem>
-            <FormItem label="下级">
-                <Checkbox true-value="1" false-value="0" v-model="bettingRecord.include"></Checkbox>
-            </FormItem>
-            <Button style="width:160px" @click="getBetHistory" type="primary">查询</Button>
+            <Button class="button" @click="handleSeach" type="primary">查询</Button>
         </Form>
         <div class="content">
             <div class="title">
+                <h5>游戏帐号</h5>
                 <h5>投注时间</h5>
-                <h5>用户</h5>
-                <h5>彩种</h5>
-                <h5>投注期号</h5>
+                <h5>投注游戏</h5>
                 <h5>投注内容</h5>
-                <h5>玩法名称</h5>
                 <h5>投注金额</h5>
-                <h5>奖金</h5>
-                <h5>开奖号码</h5>
-                <h5>状态</h5>
-                <h5>操作</h5>
+                <h5>有效投注金额</h5>
+                <h5>输赢</h5>
+                <h5>盈亏</h5>
             </div>
-            <Scroll
-                v-if="scroll"
-                :on-reach-bottom="handleReachBottom"
-                :distance-to-edge="-10"
-                height="410"
-            >
-                <ul class="list">
-                    <li v-for="(item,value) of userHistory" :key="value">
-                        <span>{{item.writetime}}</span>
-                        <span>{{item.username}}</span>
-                        <span>{{item.cnname}}</span>
-                        <span>{{item.issue}}</span>
-                        <Tooltip
-                            max-width="400"
-                            :content="item.code"
-                        >{{item.code.slice(0,16)}}{{item.code.length>16?"...":''}}</Tooltip>
-                        <span>{{item.methodname}}</span>
-                        <span>{{item.totalprice}}</span>
-                        <span>{{item.bonus}}</span>
-                        <Tooltip
-                            max-width="400"
-                            :content="item.nocode"
-                        >{{item.nocode?item.nocode.slice(0,16):''}}{{(item.nocode&&item.nocode.length)>16?"...":''}}</Tooltip>
-                        <span>{{handleStatus(item.iscancel,item.isgetprize,item.prizestatus)}}</span>
-                        <span>
-                            <Button
-                                type="primary"
-                                :disabled="!item.can"
-                                @click="handleCancel(item.projectid,value)"
-                            >撤单</Button>
-                        </span>
-                    </li>
-                    <li v-if="pages<=bettingRecord.p">
-                        <span>{{datafinish}}</span>
-                    </li>
-                </ul>
-            </Scroll>
+            <ul class="list">
+                <li v-for="(item,value) of userHistory" :key="value">
+                    <span>{{item.game_account}}</span>
+                    <span>{{item.bet_time}}</span>
+                    <span>{{item.bet_game}}</span>
+                    <span>{{item.bet_content}}</span>
+                    <span>{{item.bet_money}}</span>
+                    <span>{{item.bet_v_money}}</span>
+                    <span :style="{'color':item.winorlose=='中奖'?'#0eff00':'red'}">{{item.winorlose}}</span>
+                    <span
+                        :style="{'color':item.winorlose=='中奖'?'#0eff00':'red'}"
+                    >{{item.ts_flowing}}</span>
+                </li>
+            </ul>
             <div class="totalList">
-                <span>总投注金额：{{total_betmoney}}</span>
-                <span>总奖金：{{total_bonus}}</span>
+                <span>总计</span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span>{{stake_sum}}</span>
+                <span>{{valid_sum}}</span>
+                <span></span>
+                <span></span>
             </div>
+        </div>
+
+        <div class="pageBox">
+            <Page
+                ref="page"
+                show-total
+                :show-sizer="true"
+                show-elevator
+                size="small"
+                transfer
+                :page-size="this.bettingRecord.page_size"
+                @on-change="handleReachBottom"
+                @on-page-size-change="changePn"
+                :total="Number(total)"
+                class="page"
+            />
+            <Button @click="handleGo" class="btn">Go</Button>
         </div>
     </div>
 </template>
@@ -120,116 +105,131 @@ import {
     FormItem,
     Select,
     Option,
-    DatePicker,
     Button,
-    Checkbox,
-    Scroll,
-    Input,
-    Tooltip
+    Page,
+    Tooltip,
+    DatePicker
 } from 'iview'
 import {
     getuserlottery,
     getuserlotterymethod,
     getchildlist,
     getbethistory,
-    ordercancel
+    ordercancel,
+    getgamereport,
+    getgametypeandlobby
 } from '@/api/index'
 export default {
     name: 'bettingRecord',
     data() {
         return {
             bettingRecord: {
-                include: 0, //是否包含下級（0：不包含，1包含）
-                username: '', //用户名
-                userpointtype: '2', //投注类型
-                issue: '', //彩种奖期
-                methodid: '0', //游戏玩法
-                lotteryid: '0', //彩种名称
-                starttime: '', //起始时间
-                pn: 18, //请求的数据记录数量
-                p: 1 //请求的页面序号
+                main_type: ' ', //游戏类型
+                sub_type: ' ', //游戏大厅
+                sDate: '', //开始时间
+                eDate: '', //结束时间
+                page_size: 10, //请求的数据记录数量
+                page: 1 //请求的页面序号
             },
-            lotteryList: {}, //彩票id
-            lotteryMethodList: [], //玩法id
-            userList: [],
-            userPointTypeList: [
-                { value: '2', name: '所有类型' },
-                { value: '-1', name: '不含超级2000' },
-                { value: '1', name: '只有超级2000' }
-            ],
+            typeList: [],
+            subList: [],
             userHistory: [],
-            pages: 2, //页数
-            scroll: true, //把滚动条置顶
-            datafinish: '数据已加载完',
-            total_betmoney: 0,
-            total_bonus: 0
+            total: 0, //页数
+            stake_sum: 0, //投注额总计
+            valid_sum: 0, //有效投注额总计
+            maxDay: {
+                disabledDate: date => {
+                    return (
+                        date.valueOf() < Date.now() - 86400000 * 35 ||
+                        date.valueOf() > Date.now()
+                    )
+                }
+            }
         }
     },
     methods: {
-        handleCancel(projectid, value) {
-            ordercancel({ projectid }).then(res => {
-                this.$set(this.userHistory[value], 'can', 0)
-                this.$Message.success('撤单成功')
-            })
-        },
-        getUserLotterymethod() {
-            getuserlotterymethod({
-                lotteryid: this.bettingRecord.lotteryid
+        getSubType() {
+            getgametypeandlobby({
+                typecode: this.bettingRecord.main_type
             }).then(res => {
-                this.lotteryMethodList = [...res.data]
+                this.subList = res.data
             })
         },
-        getBetHistory() {
-            this.scroll = false
-            this.$nextTick(() => {
-                this.scroll = true
-            })
-            let bettingRecord = { ...this.bettingRecord }
-            bettingRecord.starttime = this.dataformat(
-                this.bettingRecord.starttime[0]
-            )
-            bettingRecord.endtime = this.dataformat(
-                this.bettingRecord.starttime[1]
-            )
-            bettingRecord.p = 1
-            this.$set(this.bettingRecord, 'p', 1)
-            getbethistory({ ...bettingRecord }).then(res => {
-                if (res.data.page_data) {
-                    this.userHistory = [...res.data.page_data]
-                    this.pages = Math.ceil(
-                        res.data.total_count / this.bettingRecord.pn
-                    )
-                    this.total_betmoney = res.data.total_betmoney
-                    this.total_bonus = res.data.total_bonus
+        handleSeach() {
+            this.handleReachBottom(1)
+            this.$refs.page.currentPage = 1
+        },
+        //跳转按钮
+        handleGo() {
+            let pageInput = this.$refs.page.$el
+                    .getElementsByClassName('ivu-page-options-elevator')[0]
+                    .getElementsByTagName('input')[0],
+                evtObj
+            if (window.KeyEvent) {
+                //firefox 浏览器下模拟事件
+                evtObj = document.createEvent('KeyEvents')
+                evtObj.initKeyEvent(
+                    'keyup',
+                    true,
+                    true,
+                    window,
+                    true,
+                    false,
+                    false,
+                    false,
+                    13,
+                    0
+                )
+            } else {
+                //chrome 浏览器下模拟事件
+                evtObj = document.createEvent('UIEvents')
+                evtObj.initUIEvent('keyup', true, true, window, 1)
+                delete evtObj.keyCode
+                if (typeof evtObj.keyCode === 'undefined') {
+                    //为了模拟keycode
+                    Object.defineProperty(evtObj, 'keyCode', { value: 13 })
                 } else {
-                    this.userHistory = []
-                    this.pages = 2
-                    this.total_betmoney = 0
-                    this.total_bonus = 0
+                    evtObj.key = String.fromCharCode(13)
+                }
+            }
+            pageInput.dispatchEvent(evtObj)
+
+            // this.$refs.page.changePage()
+        },
+        //切换显示条数
+        //切换显示条数
+        changePn(value) {
+            this.$set(this.bettingRecord, 'page_size', value)
+            this.$set(this.bettingRecord, 'page', 1)
+            this.getBetHistory()
+        },
+
+        getBetHistory() {
+            let bettingRecord = { ...this.bettingRecord }
+            if (bettingRecord.sDate[0]) {
+                bettingRecord.sDate = this.dataformat(
+                    this.bettingRecord.sDate[0]
+                )
+                bettingRecord.eDate = this.dataformat(
+                    this.bettingRecord.sDate[1]
+                )
+            } else {
+                bettingRecord.sDate = ''
+                bettingRecord.eDate = ''
+            }
+            getgamereport({ ...bettingRecord }).then(res => {
+                this.userHistory = [...res.data.data]
+                this.total = res.data.total
+                this.stake_sum = res.data.stake_sum
+                this.valid_sum = res.data.valid_sum
+                if (!res.data.data.length) {
+                    this.$Message.success('暂无数据')
                 }
             })
         },
-        handleReachBottom() {
-            let bettingRecord = { ...this.bettingRecord }
-            bettingRecord.starttime = this.dataformat(
-                this.bettingRecord.starttime[0]
-            )
-            bettingRecord.endtime = this.dataformat(
-                this.bettingRecord.starttime[1]
-            )
-            if (bettingRecord.p < this.pages) {
-                return new Promise(resolve => {
-                    bettingRecord.p = this.bettingRecord.p + 1
-                    this.$set(this.bettingRecord, 'p', this.bettingRecord.p + 1)
-                    getbethistory({ ...bettingRecord }).then(res => {
-                        this.userHistory = [
-                            ...this.userHistory,
-                            ...res.data.page_data
-                        ]
-                        resolve()
-                    })
-                })
-            }
+        handleReachBottom(value) {
+            this.$set(this.bettingRecord, 'page', value)
+            this.getBetHistory()
         },
         dataformat(str) {
             let time = new Date(str)
@@ -254,42 +254,18 @@ export default {
                     ? time.getSeconds()
                     : '0' + time.getSeconds())
             return time
-        },
-        handleStatus(iscancel, isgetprize, prizestatus) {
-            if (iscancel == 0) {
-                if (isgetprize == 0) {
-                    return '未开奖'
-                } else if (isgetprize == 2) {
-                    return '未中奖'
-                } else if (isgetprize == 1) {
-                    if (prizestatus == 0) {
-                        return '未派奖'
-                    } else {
-                        return '已派奖'
-                    }
-                }
-            }
-            if (iscancel == 1) {
-                return '本人撤单'
-            }
-            if (iscancel == 2) {
-                return '平台撤单'
-            }
-            if (iscancel == 3) {
-                return '错开撤单'
-            }
         }
     },
     mounted() {
-        getuserlottery().then(res => {
-            this.lotteryList = { ...res.data }
-            this.$set(this.lotteryList, 0, '所有游戏')
+        getgamereport().then(res => {
+            this.userHistory = [...res.data.data]
+            this.total = res.data.total
+            this.stake_sum = res.data.stake_sum
+            this.valid_sum = res.data.valid_sum
         })
-        //获取用户下级
-        getchildlist().then(res => {
-            if (res.data) {
-                this.userList = [...res.data]
-            }
+        //获取游戏类型与关联大厅
+        getgametypeandlobby().then(res => {
+            this.typeList = res.data
         })
     },
     components: {
@@ -297,54 +273,111 @@ export default {
         FormItem,
         Select,
         Option,
-        DatePicker,
         Button,
-        Checkbox,
-        Scroll,
-        Input,
-        Tooltip
+        Page,
+        DatePicker
     }
 }
 </script>
 
 <style lang="stylus" scoped>
+.navTitle
+    background #ea2f4c
+    width 150px
+    line-height 50px
+    color #ffffff
+    font-size 16px
+    border-bottom-right-radius 20px
+    text-align center
+    margin-bottom 20px
+>>>.ivu-form .ivu-form-item-label
+    color #fff
 .content
-    box-shadow inset 0px 3px 20px 1px #d0d0d0
     border-radius 3px
     overflow hidden
     position relative
-    padding-bottom 30px
+    padding-bottom 46px
     .title
-        background #2d8cf0
+        background #000
         display flex
         padding-right 20px
         h5
             flex 1
-            line-height 30px
+            line-height 45px
             text-align center
             color #fff
     .list
+        height 590px
+        overflow-y scroll
         li
             display flex
             margin-bottom 10px
-            span, >div
+            span
                 flex 1
                 text-align center
-                font-size 12px
-                line-height 18px
-                height 100%
+                font-size 14px
+                line-height 26px
+                color #fff
+            &>div
+                flex 1
+                text-align center
+                font-size 14px
+                color #fff
             .code
                 overflow-x auto
     .totalList
         position absolute
         bottom 0
         width 100%
-        height 30px
         color #fff
-        background #112840
+        background #ea2f4c
         display flex
         span
             flex 1
             text-align center
-            line-height 30px
+            line-height 46px
+            font-size 14px
+.button
+    border-radius 17px
+    background-image linear-gradient(0, rgb(245, 96, 81) 0%, rgb(251, 196, 52) 100%)
+    background-color #fbc434
+    width 107px
+    line-height 35px
+    height 35px
+    padding 0
+    margin 0
+    color #fff
+    border none
+    font-size 14px
+    text-indent 10px
+    letter-spacing 10px
+.pageBox
+    overflow hidden
+    text-align center
+    .page
+        font-size 14px
+        color #fff
+        text-align center
+        padding 20px 0
+        display inline-block
+        vertical-align middle
+        >>>.ivu-page-item
+            border-radius 200px
+            margin 0 4px
+        >>>.ivu-page-item-active
+            background #ea2f4c
+            a
+                color #fff
+    .btn
+        display inline-block
+        width 33px
+        line-height 20px
+        font-size 14px
+        text-align center
+        border-radius 5px
+        padding 0
+        maring 0
+        background-color rgb(234, 47, 76)
+        border none
+        color #fff
 </style>

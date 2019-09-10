@@ -1,9 +1,9 @@
 <template>
-    <div v-if="this.onOff" class="registered">
+    <div class="registered">
         <div class="arrow"></div>
         <div class="container">
             <h5>注册您的账户</h5>
-            <Form ref="formInline" :model="formInline" :rules="ruleInline" :label-width="80">
+            <Form ref="formInline" :model="formInline" :rules="ruleInline" :label-width="70">
                 <FormItem prop="user" label="用户名称">
                     <Input
                         type="text"
@@ -26,13 +26,21 @@
                     <img
                         @click="getPopularizereg"
                         style="position:absolute;z-index:1;right:0"
+                        height="100%"
                         :src="img"
-                        alt
                     />
-                    <Input type="text" v-model="formInline.imgCode" placeholder="请输入验证码"></Input>
+                    <Input
+                        type="text"
+                        v-model="formInline.imgCode"
+                        placeholder="请输入验证码"
+                        @keyup.enter="handleSubmit('formInline')"
+                    ></Input>
                 </FormItem>
                 <FormItem>
-                    <Button type="primary" @click="handleSubmit('formInline')">确定</Button>
+                    <Button type="primary" :loading="loading" @click="handleSubmit('formInline')">
+                        <span v-if="!loading">注册用户</span>
+                        <span v-else>创建用户中...</span>
+                    </Button>
                 </FormItem>
             </Form>
         </div>
@@ -41,7 +49,7 @@
 </template>
 
 <script>
-import { popularizereg } from '@/api/index'
+import { popularizereg, getunreadmessageamount, getbalance } from '@/api/index'
 import { Form, FormItem, Input, Button } from 'iview'
 import md5 from 'js-md5'
 export default {
@@ -83,7 +91,6 @@ export default {
         }
         return {
             readonly: true,
-            onOff: false,
             img: '',
             vvccookie: '',
             formInline: {
@@ -98,16 +105,18 @@ export default {
                 password: [{ validator: validatePass, trigger: 'blur' }],
                 confirm: [{ validator: validateConfirm, trigger: 'blur' }],
                 imgCode: [{ validator: validateImgCode, trigger: 'blur' }]
-            }
+            },
+            loading: false
         }
     },
     methods: {
         close() {
-            this.onOff = false
+            this.$parent.registered = false
         },
         handleSubmit(name) {
             this.$refs[name].validate(valid => {
                 if (valid) {
+                    this.loading = true
                     popularizereg({
                         flag: 'reg',
                         c: this.formInline.code ? this.formInline.code : '',
@@ -115,21 +124,49 @@ export default {
                         code: md5(this.formInline.imgCode), //验证码
                         vvccookie: this.vvccookie,
                         password: this.formInline.password
-                    }).then(res => {
-                        this.onOff = false
-                        this.formInline = {
-                            user: '',
-                            password: '',
-                            confirm: '',
-                            code: '',
-                            imgCode: ''
+                    }).then(
+                        res => {
+                            this.loading = false
+                            this.$parent.registered = false
+                            sessionStorage.setItem('token', res.data.token)
+                            sessionStorage.setItem(
+                                'nickname',
+                                res.data.nickname
+                            )
+                            sessionStorage.setItem(
+                                'userSeting',
+                                JSON.stringify(res.data)
+                            )
+                            this.$store.dispatch('handleLogin', 1)
+                            this.$store.dispatch(
+                                'handleNickName',
+                                res.data.nickname
+                            )
+                            this.$Message.info('注册成功')
+                            getbalance().then(res => {
+                                this.$store.dispatch(
+                                    'handleMoney',
+                                    res.data.money
+                                )
+                            })
+                            getunreadmessageamount().then(res => {
+                                this.$store.dispatch(
+                                    'handleUnReadAmount',
+                                    res.data.unreadamount
+                                )
+                            })
+                            this.$set(this.login, 'loginpass', '')
+                            this.readonly = true
+                        },
+                        rjc => {
+                            this.$Message.error(rjc.msg)
+                            this.loading = false
                         }
-                        this.$Message.success(res.msg)
-                    })
+                    )
                 } else {
                     this.$Message.error('格式错误，请重新输入!')
+                    this.getPopularizereg()
                 }
-                this.getPopularizereg()
                 this.$set(this.formInline, 'imgCode', '')
             })
         },
@@ -163,21 +200,20 @@ export default {
     top 45px
     line-height normal
     animation fadeInDown ease 1s
-    .arrow
-        width 0
-        height 0
-        border-style solid
-        border-width 0 10px 10px 5px
-        border-color transparent transparent #fff transparent
-        margin auto
     .container
         border-radius 10px
-        background #fff
+        background #202020
         padding 10px
         h5
             text-align center
             font-size 20px
-            color #000
+            color #fff
+            line-height 50px
+        >>>.ivu-form-item-label
+            color #fff
+        >>>.ivu-btn.ivu-btn-primary
+            background #ea2f4c
+            border none
     .remanber
         color #000
         margin-top 10px
@@ -195,7 +231,7 @@ export default {
         height 24px
         position absolute
         right 20px
-        top 24px
+        top 16px
         background url('../../assets/images/btn-close.png') no-repeat 0 0
         background-size 24px
         filter grayscale(1) opacity(0.5)

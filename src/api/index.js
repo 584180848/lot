@@ -8,22 +8,8 @@ const public_key = `-----BEGIN PUBLIC KEY-----
                 1w7tA6yR5iwYfN5vS+aorsI8tcRxuNGpDtJsLS9kINGd7VH2ocmYSv8PDUKZMLqr
                 i5Azz9DtRubvoQJFAgMBAAE=
                 -----END PUBLIC KEY-----`
-const privateKey = `
------BEGIN RSA PRIVATE KEY-----
-MIICWgIBAAKBgGeBwE0bATN5j/AWlYAiAMRE+6FNJGxIXZmW2J7Qks1c+inXB4KQ
-IuXK2a6DLfuGnxRWCTa0XJvHr6vLWvx1J8zVktOq1w7tA6yR5iwYfN5vS+aorsI8
-tcRxuNGpDtJsLS9kINGd7VH2ocmYSv8PDUKZMLqri5Azz9DtRubvoQJFAgMBAAEC
-gYAWf+fzWtlp/RTC1cXtsnaEM5KXP5OZTim6h0XTT/d5WKqwiaOCSB6t4OhsvOsz
-79GItCMQlyhCXKfdKjk/A6CA6WG4DUhJywDsO9W56xp9wBBE047qukZioIHTKLbX
-omsTCuIwalAKQ1uRd+9y1tf/pD/vSODBvAxOVXLvVPbJSQJBAKkm/wbz7uo9a1vV
-Olu+olFHN361bygUlyA5L+pvviboXb47Bf4HemR/xENZez/rXcduCFuIkSZ+6TA3
-oSXVacsCQQCcpnV0C4nCP9po0GaQImJPuQz4Yacol5nODuTxS/GjRl/BVWbEp/qo
-tMjalmSuDXiiwjzYp43c3kk2Qx6v/QIvAkBAsCghmZIJxJlVElNyGJJssOaZL3um
-AVHWQeiAKGG48W5APMRK5MM6wd3lv8expypDBWJu1uhjp284QF4BYP9HAkA+3R4t
-X6P87Br+DQPbu7CwRZbK5oVqaMw0QQ3nN47U8xziPR9ss+yHX2VrMwdcQdOznTdF
-ypfHlvzSZcUe4u3JAkBIGDs4HLojgf05f/c17zN/Zav+D7aMHAYr2ZM5PGmIv4MJ
-rlPH5K63Mupv/Lb+2rVVI0os6nEeLo5v7sWQjoNG
------END RSA PRIVATE KEY-----`
+
+//分段加密
 export const RSAencrypt = str => {
     let BLOCK_SIZE = 100,
         jse = new JSEncrypt(),
@@ -40,14 +26,6 @@ export const RSAencrypt = str => {
         ret += jse.encrypt(str_1) + ' '
     }
     return ret
-}
-export const decryptData = data => {
-    let decrypt = new JSEncrypt()
-
-    // 设置私钥
-    decrypt.setPrivateKey(privateKey)
-    // 解密数据
-    return decrypt.decrypt(data)
 }
 
 //登录
@@ -82,6 +60,13 @@ export const getsecpass = formData =>
     service.request({
         method: 'post',
         url: 'security/checksecpassexist'
+    })
+//设定资金密码
+export const setsecpass = formData =>
+    service.request({
+        method: 'post',
+        url: 'security/setsecpass',
+        data: qs.stringify(formData)
     })
 //验证资金密码
 export const checksecpass = formData =>
@@ -447,5 +432,119 @@ export const updateuserbankcard = formData =>
     service.request({
         method: 'post',
         url: 'user/updateuserbankcard',
+        data: qs.stringify(formData)
+    })
+//获取中奖人
+export const getwinner = formData =>
+    service.request({
+        method: 'post',
+        url: 'default/getwinnerlist',
+        data: qs.stringify(formData)
+    })
+//获取彩票日工资契约
+export const getdailycontractrecord = formData =>
+    service.request({
+        method: 'post',
+        url: 'contract/getdailycontractrecord',
+        data: qs.stringify(formData)
+    })
+//获取分红契约记录
+export const getmonthlycontractrecord = formData =>
+    service.request({
+        method: 'post',
+        url: 'contract/getmonthlycontractrecord',
+        data: qs.stringify(formData)
+    })
+//第三方接口
+//第三方充值类型列表
+export const getThreeDeposit = formData =>
+    service.request({
+        method: 'post',
+        url: 'deposit/main',
+        data: qs.stringify(formData)
+    })
+//充值
+export const unionpayaddcredit = (formData, url) =>
+    service.request({
+        method: 'post',
+        url: url,
+        data: qs.stringify(formData)
+    })
+//第三方游戏跳转
+export const igLogin = formData =>
+    service.request({
+        method: 'post',
+        url: 'thirdgame/login',
+        data: qs.stringify(formData)
+    })
+//获取所有钱包余额
+export const getuserwallet = formData =>
+    service.request({
+        method: 'post',
+        url: 'thirdgame/getuserwallet',
+        data: qs.stringify(formData)
+    })
+//获取选单
+export const getThirdMenu = formData =>
+    service.request({
+        method: 'post',
+        url: 'thirdgame/getmenu',
+        data: qs.stringify(formData)
+    })
+//更新单一游戏钱包余额
+export const updatewallet = formData =>
+    service.request({
+        method: 'post',
+        url: 'thirdgame/updatewallet',
+        data: qs.stringify(formData)
+    })
+//主平台转账至第三方游戏平台
+export const deposit = formData =>
+    service.request({
+        method: 'post',
+        url: 'thirdgame/deposit',
+        data: qs.stringify(formData)
+    })
+//第三方游戏平台转账至主平台
+export const withdraw = formData =>
+    service.request({
+        method: 'post',
+        url: 'thirdgame/withdraw',
+        data: qs.stringify(formData)
+    })
+//获取交易记录
+export const gettransreport = formData =>
+    service.request({
+        method: 'post',
+        url: 'thirdgame/gettransreport',
+        data: qs.stringify(formData)
+    })
+//获取交易记录
+export const getgamereport = formData =>
+    service.request({
+        method: 'post',
+        url: 'thirdgame/getgamereport',
+        data: qs.stringify(formData)
+    })
+//提款需求
+
+export const handleThreeWithdraw = formData =>
+    service.request({
+        method: 'post',
+        url: 'withdraw/withdraw',
+        data: qs.stringify(formData)
+    })
+//取得游戏类型与关联大厅
+export const getgametypeandlobby = formData =>
+    service.request({
+        method: 'post',
+        url: 'thirdgame/getgametypeandlobby',
+        data: qs.stringify(formData)
+    })
+//获取游戏列表
+export const getgamelist = formData =>
+    service.request({
+        method: 'post',
+        url: '/thirdgame/getgamelist',
         data: qs.stringify(formData)
     })

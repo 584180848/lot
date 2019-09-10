@@ -79,7 +79,13 @@
             <div v-show="!messageSendList.length">暂无数据...</div>
         </div>
         <div v-show="navIndex==3" class="content" style="padding:10px">
-            <Form ref="formInline" :model="formInline" :rules="ruleInline" :label-width="60">
+            <Form
+                ref="formInline"
+                :model="formInline"
+                :rules="ruleInline"
+                :label-width="100"
+                label-position="left"
+            >
                 <FormItem prop="childid" label="下级用户">
                     <Select v-model="formInline.childid">
                         <Option
@@ -101,13 +107,18 @@
                     ></Input>
                 </FormItem>
                 <FormItem>
-                    <Button type="primary" @click="handleSubmit('formInline')">发送</Button>
-                    <Button style="margin-left:20px" type="primary" @click="handleInit">重置</Button>
+                    <Button
+                        size="large"
+                        shape="circle"
+                        type="error"
+                        @click="handleSubmit('formInline')"
+                    >发送</Button>
+                    <Button style="margin-left:20px" @click="handleInit">重置</Button>
                 </FormItem>
             </Form>
         </div>
         <div v-show="navIndex==4" class="content" style="padding:10px">
-            <Form ref="parentsLine" :model="parentsLine" :rules="ruleParents" :label-width="60">
+            <Form ref="parentsLine" :model="parentsLine" :rules="ruleParents" :label-width="100">
                 <FormItem prop="subject" label="信息标题">
                     <Input type="text" v-model="parentsLine.subject" placeholder="请输入标题" />
                 </FormItem>
@@ -120,8 +131,8 @@
                     ></Input>
                 </FormItem>
                 <FormItem>
-                    <Button type="primary" @click="handleSubmitLine('parentsLine')">发送</Button>
-                    <Button style="margin-left:20px" type="primary" @click="handleParentsLine">重置</Button>
+                    <Button shape="circle" type="error" @click="handleSubmitLine('parentsLine')">发送</Button>
+                    <Button shape="circle" style="margin-left:20px" @click="handleParentsLine">重置</Button>
                 </FormItem>
             </Form>
         </div>
@@ -131,7 +142,7 @@
                 ref="replyLine"
                 :model="replyLine"
                 :rules="ruleReplyLine"
-                :label-width="60"
+                :label-width="100"
             >
                 <Icon @click="close" class="close" type="md-close-circle" />
                 <FormItem prop="subject" label="信息标题">
@@ -146,8 +157,13 @@
                     ></Input>
                 </FormItem>
                 <FormItem>
-                    <Button type="primary" @click="handleReply('replyLine')">发送</Button>
-                    <Button style="margin-left:20px" type="primary" @click="handleInitReply">重置</Button>
+                    <Button shape="circle" type="primary" @click="handleReply('replyLine')">发送</Button>
+                    <Button
+                        shape="circle"
+                        style="margin-left:20px"
+                        type="primary"
+                        @click="handleInitReply"
+                    >重置</Button>
                 </FormItem>
             </Form>
         </div>
@@ -340,13 +356,6 @@ export default {
                             'content',
                             res.data.mes.content
                         )
-                        //已读数量减1
-                        if (!this.list[value[0]].readtime) {
-                            this.$store.dispatch(
-                                'handleUnReadAmount',
-                                res.data.unreadamount
-                            )
-                        }
                         //设置为已读·
                         this.$set(this.list[value[0]], 'readtime', 1)
                     }
@@ -372,14 +381,13 @@ export default {
         },
         handleDelete() {
             let arr = [], //拿到药删除的id
-                arrIndex = [], //拿到药删除的对象的下标
                 dataList =
                     this.navIndex == 1
                         ? [...this.list]
                         : [...this.messageSendList]
 
             dataList.forEach((item, index) => {
-                item.active && arr.push(item.entry) && arrIndex.push(index)
+                item.active && arr.push(item.entry)
             })
             if (arr.length) {
                 //是否有选中删除的对象
@@ -387,19 +395,7 @@ export default {
                     flag: this.navIndex == 1 ? 'receiveuser' : 'senduser',
                     msgid: arr
                 }).then(res => {
-                    arrIndex.forEach(item => {
-                        dataList.splice(item, 1)
-                    })
-                    this.navIndex == 1
-                        ? (this.list = [...dataList])
-                        : (this.messageSendList = [...dataList])
-                    this.activeIndex = ''
-                    if (this.all) {
-                        this.navIndex == 1
-                            ? (this.list = [])
-                            : (this.messageSendList = [])
-                        this.all = false
-                    }
+                    this.changeContent(this.navIndex)
                 })
             } else {
                 this.$Message.error('请选择要删除的信息')
@@ -578,12 +574,30 @@ export default {
 <style lang="stylus" scoped>
 .information
     position relative
+    >>>.ivu-menu-item
+        background #000
+        color #fff !important
+        margin-right 8px
+        height 40px
+        line-height 40px
+        width 130px
+        border-top-right-radius 7px
+        border-top-left-radius 7px
+        text-align center
+        &.ivu-menu-item-active
+            background #ea2f4c
+            border-bottom none
+    >>>.ivu-menu
+        height 40px
+    >>>.ivu-btn
+        width 100px
     .reply
         position absolute
-        z-index 100
-        top 60px
-        width 100%
-        height 100%
+        z-index 999
+        top -16px
+        left -16px
+        width 640px
+        height 598px
         border 1px solid #dcdcdc
         border-radius 3px
         background rgba(0, 0, 0, 0.2)
@@ -598,9 +612,12 @@ export default {
             position relative
             overflow hidden
 .content
-    background #f2f2f2
     height 500px
     overflow-y auto
+    >>>.ivu-collapse
+        background #fff
+    >>>.ivu-form-item-label
+        text-align left
     .box
         display inline-block
         width 15px

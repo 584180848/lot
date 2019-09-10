@@ -16,7 +16,7 @@
                 <Input type="text" v-model="answerInline.answer" placeholder="请输入答案"></Input>
             </FormItem>
             <FormItem>
-                <Button @click="handleSubmit('answerInline')" type="primary">确定</Button>
+                <Button shape="circle" @click="handleSubmit('answerInline')" type="primary">确定</Button>
             </FormItem>
         </Form>
         <div v-show="!listIndex">
@@ -25,6 +25,7 @@
                 active-name="1"
                 @on-select="changeContent"
                 style="margin-bottom:10px"
+                ref="menu"
             >
                 <MenuItem name="1">密保重置</MenuItem>
                 <MenuItem name="2">资金密码重置</MenuItem>
@@ -212,7 +213,8 @@ export default {
                     }
                     if (name == 'formInline') {
                         setsequestion({ ...this.formInline }).then(res => {
-                            this.$Message.success('Success!')
+                            this.$Message.success('设置成功!')
+                            this.$parent.$parent.alert = false
                         })
                     }
                     if (name == 'resetPassword') {
@@ -226,6 +228,7 @@ export default {
                             json: RSAencrypt(JSON.stringify(oJosn))
                         }).then(res => {
                             this.$Message.success('重置资金密码成功')
+                            this.$parent.$parent.alert = false
                         })
                     }
                 } else {
@@ -234,13 +237,20 @@ export default {
             })
         },
         changeContent(value) {
-            this.tableIndex = value
+            if (value == 2 && !this.listIndex) {
+                this.$Message.error('您还未设定密保，请先设定密保')
+                this.$refs['menu'].currentActiveName = '1'
+            } else {
+                this.tableIndex = value
+            }
         }
     },
     mounted() {
         checksequestion().then(res => {
             if (!(res.data instanceof Array)) {
                 this.listIndex = res.data
+            } else {
+                this.$Message.success('请先绑定密保')
             }
         })
     },
@@ -257,5 +267,13 @@ export default {
 }
 </script>
 
-<style lang="stylus" scoped></style>
+<style lang="stylus" scoped>
+>>>.ivu-btn-primary
+    background #f85654
+    border-color #f85654
+    outline none
+    color #fff
+>>>.ivu-btn
+    width 80px
+</style>
 

@@ -1,17 +1,21 @@
 <template>
     <div class="marquee">
         <div class="box">
-            <p>公告栏</p>
+            <p>最新公告：</p>
             <p>
-                <marquee-text :duration="speed">{{textList}}</marquee-text>
+                <marquee-text v-if="textList" :duration="speed">
+                    <div class="content" v-html="textList" @click="handleAlert($event)"></div>
+                </marquee-text>
             </p>
         </div>
+        <notice ref="notice"></notice>
     </div>
 </template>
 
 <script>
 import MarqueeText from 'vue-marquee-text-component'
 import { getnotice } from '@/api/index'
+import notice from '../userCenter/notice'
 export default {
     data() {
         return {
@@ -19,36 +23,48 @@ export default {
             speed: 40
         }
     },
+    methods: {
+        handleAlert(e) {
+            var index = e.srcElement.getAttribute('data-index')
+            this.$refs.notice.handleAlert(index)
+        }
+    },
     mounted() {
         getnotice().then(res => {
             this.speed *= res.data.affects
-            res.data.results.forEach(item => {
-                this.textList += item.subject + item.content
+            res.data.results.forEach((item, index) => {
+                this.textList += `<span  data-index="${index}">${item.subject}${item.content}</span>`
             })
         })
     },
     components: {
-        MarqueeText
+        MarqueeText,
+        notice
     }
 }
 </script>
 
 <style lang="stylus" scoped>
 .marquee
-    background #000
-    color #fff
+    color #e4d4a2
     font-size 12px
-    line-height 30px
+    line-height 50px
     cursor pointer
     .box
-        width 1200px
+        width 593px
         margin auto
         overflow hidden
+        .marquee-text-wrap
+            width 500px
         p:nth-child(1)
             float left
-            padding-right 14px
         p:nth-child(2)
             overflow hidden
             float left
-            width 1150px
+            width 380px
+            >>>.content
+                padding-left 380px
+                span
+                    float left
+                    height 100%
 </style>

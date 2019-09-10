@@ -1,25 +1,52 @@
 <template>
-    <div id="app" :class="{'adminHidden':this.$store.state.userCenter}">
-        <Nav />
+    <div id="app" ref="app">
+        <Nav v-if="this.$route.name!='speedTest'&&this.$route.name!='history'" />
         <router-view />
-        <Footer />
-        <BackTop>
-            <div class="backtop">返回顶端</div>
-        </BackTop>
-        <UserCenter />
+        <Footer v-if="this.$route.name!='history'" />
     </div>
 </template>
 <script>
 import Nav from '@/components/nav.vue'
 import Footer from '@/components/footer.vue'
-import UserCenter from '@/components/userCenter.vue'
-import { BackTop } from 'iview'
 export default {
+    name: 'app',
+    data() {
+        return {
+            alert: false
+        }
+    },
+    methods: {
+        IsPC() {
+            var userAgentInfo = navigator.userAgent
+            var Agents = new Array(
+                'Android',
+                'iPhone',
+                'SymbianOS',
+                'Windows Phone',
+                'iPad',
+                'iPod'
+            )
+            var flag = true
+            for (var v = 0; v < Agents.length; v++) {
+                if (userAgentInfo.indexOf(Agents[v]) > 0) {
+                    flag = false
+                    break
+                }
+            }
+            return flag
+        }
+    },
+    mounted() {
+        let url = `https://m${window.location.href.substring(
+            window.location.href.indexOf('//www') + 5
+        )}`
+        if (!this.IsPC()) {
+            window.open(url, '_self')
+        }
+    },
     components: {
         Nav,
-        Footer,
-        BackTop,
-        UserCenter
+        Footer
     }
 }
 </script>
@@ -27,13 +54,8 @@ export default {
 @import 'styles/rest.styl'
 
 #app
-    padding-top 121px
-    &.adminHidden
-        height 100vh
-        overflow hidden
-    .backtop
-        background #ff0000
-        color #fff
-        padding 10px
-        border-radius 10px
+    background url('./assets/images/homeBg.jpg')
+    min-width 1200px
+#lim_mini
+    display none !important
 </style>

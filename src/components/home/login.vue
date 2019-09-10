@@ -1,17 +1,29 @@
 <template>
-    <div v-if="this.onOff" class="login">
+    <div class="login">
         <div class="arrow"></div>
         <div class="container">
             <h5>登录您的账户</h5>
             <p>亚洲最好的博彩网站</p>
             <div class="form_list">
-                <div class="list">
+                <div class="list" @click="removeInputReadonly">
                     <label for="user"></label>
-                    <input id="user" type="text" v-model="login.username" placeholder="用户名" />
+                    <input
+                        id="user"
+                        type="text"
+                        v-model="login.username"
+                        placeholder="用户名"
+                        :readonly="readonly"
+                    />
                 </div>
-                <div class="list">
+                <div class="list" @click="removeInputReadonly">
                     <label for="password"></label>
-                    <input id="password" v-model="login.loginpass" type="password" placeholder="密码" />
+                    <input
+                        id="password"
+                        v-model="login.loginpass"
+                        type="password"
+                        placeholder="密码"
+                        :readonly="readonly"
+                    />
                 </div>
                 <div class="list">
                     <img
@@ -20,7 +32,13 @@
                         :src="img"
                         alt
                     />
-                    <input type="text" v-model="login.imgCode" placeholder="请输入验证码" />
+                    <input
+                        class="yanzhengma"
+                        type="text"
+                        v-model="login.code"
+                        placeholder="请输入验证码"
+                        @keyup.enter="handlelogin"
+                    />
                 </div>
                 <button class="submint_button" @click="handlelogin">立即登录</button>
                 <div class="remanber">
@@ -47,20 +65,28 @@
 </template>
 
 <script>
-import { login, getbalance, getMenu, popularizereg } from '@/api/index.js'
+import {
+    login,
+    getbalance,
+    getMenu,
+    popularizereg,
+    iglogin,
+    getunreadmessageamount
+} from '@/api/index.js'
+import md5 from 'js-md5'
 export default {
     name: 'login',
     data() {
         return {
-            onOff: false,
             login: {
                 username: '',
                 loginpass: '',
-                imgCode: ''
+                code: ''
             },
             img: '',
             vvccookie: '',
-            rememberUserName: false
+            rememberUserName: false,
+            readonly: true
         }
     },
     mounted() {
@@ -71,11 +97,14 @@ export default {
         this.getPopularizereg()
     },
     methods: {
+        removeInputReadonly() {
+            this.readonly = false
+        },
         openRegistered() {
             this.$parent.open('registered', 'registeredPosition')
         },
         close() {
-            this.onOff = false
+            this.$parent.login = false
         },
         getPopularizereg() {
             popularizereg().then(res => {
@@ -96,23 +125,33 @@ export default {
             if (this.rememberUserName && this.login.username) {
                 localStorage.setItem('userName', this.login.username)
             }
-            login(this.login).then(res => {
+            login({
+                username: this.login.username,
+                loginpass: this.login.loginpass,
+                code: md5(this.login.code),
+                vvccookie: this.vvccookie
+            }).then(res => {
                 sessionStorage.setItem('token', res.data.token)
                 sessionStorage.setItem('nickname', res.data.nickname)
                 sessionStorage.setItem('userSeting', JSON.stringify(res.data))
-                this.onOff = false
+                this.$parent.login = false
                 this.$store.dispatch('handleLogin', 1)
                 this.$store.dispatch('handleNickName', res.data.nickname)
                 this.$Message.info('登录成功')
                 getbalance().then(res => {
                     this.$store.dispatch('handleMoney', res.data.money)
                 })
-                getMenu().then(res => {
-                    this.$store.dispatch('handleLotteryMenue', {
-                        ...res.data
-                    })
+                this.$set(this.login, 'loginpass', '')
+                this.readonly = true
+                getunreadmessageamount().then(res => {
+                    this.$store.dispatch(
+                        'handleUnReadAmount',
+                        res.data.unreadamount
+                    )
                 })
             })
+            //验证码
+            this.getPopularizereg()
         }
     }
 }
@@ -126,21 +165,15 @@ export default {
     top 45px
     line-height normal
     animation fadeInDown ease 1s
-    .arrow
-        width 0
-        height 0
-        border-style solid
-        border-width 0 10px 10px 5px
-        border-color transparent transparent #fff transparent
-        margin auto
     .container
         border-radius 10px
-        background #fff
+        background #202020
         padding 10px
         h5
             text-align center
             font-size 20px
-            color #000
+            color #fff
+            line-height 60px
         p
             text-align center
             font-size 13px
@@ -167,13 +200,16 @@ export default {
                 vertical-align top
             input
                 display inline-block
-                height 42px
+                height 45px
                 width calc(100% - 40px)
                 border none
                 vertical-align top
-                background none
+                background #fff
                 outline none
                 text-indent 20px
+                user-select auto
+                &.yanzhengma
+                    width 220px
     .submint_button
         background linear-gradient(#c74546, #a92c2d)
         border none
@@ -186,7 +222,7 @@ export default {
         &:hover
             background linear-gradient(#a41c1d, #7c1212)
     .remanber
-        color #000
+        color #fff
         margin-top 10px
         overflow hidden
         &>div:first-child
